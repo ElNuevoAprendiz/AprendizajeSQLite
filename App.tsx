@@ -24,20 +24,40 @@ export default function App() {
     fetchTasks(); // Recargar cuando cambie el filtro
   }, [filter]); // <-- IMPORTANTE: Se ejecuta cada vez que el filtro cambia
 
+  
+
+   // --- LÓGICA DE MIGRACIONES ---
   const runMigrations = () => {
+    // 1. Consultar la versión actual de la base de datos
+    // user_version es un espacio especial en SQLite para guardar un número de versión
     const result = db.getFirstSync<{ user_version: number }>('PRAGMA user_version');
     let currentVersion = result?.user_version ?? 0;
 
-    if (currentVersion < 2) {
+    console.log("Versión actual de la DB:", currentVersion);
+
+    // MIGRACIÓN 1: Crear la tabla inicial
+    if (currentVersion < 1) {
       db.execSync(`
         CREATE TABLE IF NOT EXISTS tasks (
           id INTEGER PRIMARY KEY AUTOINCREMENT, 
-          name TEXT NOT NULL,
-          completed INTEGER DEFAULT 0
+          name TEXT NOT NULL
         );
       `);
-      db.execSync(`PRAGMA user_version = 2`);
+      currentVersion = 1;
     }
+
+    // MIGRACIÓN 2: Añadir la columna 'completed' si no existe
+    if (currentVersion < 2) {
+      try {
+        db.execSync(`ALTER TABLE tasks ADD COLUMN completed INTEGER DEFAULT 0;`);
+      } catch (e) {
+        console.log("La columna ya existía o hubo un error", e);
+      }
+      currentVersion = 2;
+    }
+
+    // 2. Guardar la nueva versión en la base de datos
+    db.execSync(`PRAGMA user_version = ${currentVersion}`);
   };
 
   // 2. Función de lectura modificada para filtrar
