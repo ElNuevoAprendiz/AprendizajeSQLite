@@ -35,6 +35,13 @@ export default function App() {
 
     console.log("Versión actual de la DB:", currentVersion);
 
+    //Prueba mia para saber si existe la columna completed
+
+     
+     //console.log("Columnas de la tabla tasks:", result2);
+     //console.log([result2.some(column => column.name === 'completed')]);
+
+
     // MIGRACIÓN 1: Crear la tabla inicial
     if (currentVersion < 1) {
       db.execSync(`
@@ -46,8 +53,13 @@ export default function App() {
       currentVersion = 1;
     }
 
+    //Uso result2 para obtener el resultado de la estructura de la tabla para despues poder verificar si existe 
+    //la columna completed, de no existir se añade en la migración 2
+    const result2 = db.getAllSync<{ name: string }>(`PRAGMA table_info(tasks)`);
+    const respuesta: boolean = result2.some(column => column.name === 'completed');
+
     // MIGRACIÓN 2: Añadir la columna 'completed' si no existe
-    if (currentVersion < 2) {
+    if (respuesta === false) {
       try {
         db.execSync(`ALTER TABLE tasks ADD COLUMN completed INTEGER DEFAULT 0;`);
       } catch (e) {
