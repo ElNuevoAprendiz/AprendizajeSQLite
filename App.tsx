@@ -56,6 +56,8 @@ export default function App() {
     //Uso result2 para obtener el resultado de la estructura de la tabla para despues poder verificar si existe 
     //la columna completed, de no existir se añade en la migración 2
     const result2 = db.getAllSync<{ name: string }>(`PRAGMA table_info(tasks)`);
+    console.log("Columnas de la tabla tasks:", result2);
+    console.log(Array.isArray(result2));
     const respuesta: boolean = result2.some(column => column.name === 'completed');
 
     // MIGRACIÓN 2: Añadir la columna 'completed' si no existe
